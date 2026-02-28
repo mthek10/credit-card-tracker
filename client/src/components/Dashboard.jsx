@@ -45,6 +45,40 @@ export default function Dashboard() {
       }
     });
 
+    // Collect all available credits to use
+    const availableCredits = [];
+    walletCards.forEach(card => {
+      card.benefits
+        .filter(b => b.type === 'credit' && b.maxValue)
+        .forEach(benefit => {
+          const remaining = benefit.maxValue - benefit.used;
+          const percentUsed = Math.round((benefit.used / benefit.maxValue) * 100);
+          if (remaining > 0) {
+            availableCredits.push({
+              cardId: card.id,
+              cardName: card.nickname || card.name,
+              cardIssuer: card.issuer,
+              benefitName: benefit.name,
+              description: benefit.description,
+              category: benefit.category,
+              total: benefit.maxValue,
+              used: benefit.used,
+              remaining,
+              percentUsed,
+              daysRemaining: card.cardmemberYear.daysRemaining,
+              isExpiringSoon: card.cardmemberYear.daysRemaining <= 30,
+            });
+          }
+        });
+    });
+
+    // Sort by: expiring soon first, then by remaining amount (highest first)
+    availableCredits.sort((a, b) => {
+      if (a.isExpiringSoon && !b.isExpiringSoon) return -1;
+      if (!a.isExpiringSoon && b.isExpiringSoon) return 1;
+      return b.remaining - a.remaining;
+    });
+
     return {
       totalFees,
       totalBenefitsUsed,
@@ -52,6 +86,7 @@ export default function Dashboard() {
       overallProgress,
       totalPotentialBenefits,
       expiringBenefits,
+      availableCredits,
       cardCount: walletCards.length,
     };
   }, [walletCards]);
@@ -233,6 +268,88 @@ export default function Dashboard() {
         </div>
       )}
 
+      {/* Available Credits Section */}
+      {stats.availableCredits.length > 0 && (
+        <div>
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h2 className="text-xl font-semibold text-gray-900">Credits to Use</h2>
+              <p className="text-sm text-gray-500">Take advantage of these card benefits</p>
+            </div>
+            <div className="text-right">
+              <div className="text-2xl font-bold text-indigo-600">
+                {formatCurrency(stats.availableCredits.reduce((sum, c) => sum + c.remaining, 0))}
+              </div>
+              <div className="text-xs text-gray-500">available to use</div>
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {stats.availableCredits.slice(0, 6).map((credit, idx) => (
+              <Link
+                key={`${credit.cardId}-${credit.benefitName}-${idx}`}
+                to={`/wallet/${credit.cardId}`}
+                className="group bg-white rounded-2xl border border-gray-200 p-5 hover:shadow-lg hover:border-indigo-200 transition-all"
+              >
+                <div className="flex items-start justify-between mb-3">
+                  <div className="flex items-center gap-3">
+                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${getCategoryStyle(credit.category).bg}`}>
+                      <CategoryIcon category={credit.category} className={`w-5 h-5 ${getCategoryStyle(credit.category).text}`} />
+                    </div>
+                    <div>
+                      <div className="font-semibold text-gray-900 group-hover:text-indigo-600 transition-colors">
+                        {credit.benefitName}
+                      </div>
+                      <div className="text-sm text-gray-500">{credit.cardName}</div>
+                    </div>
+                  </div>
+                  {credit.isExpiringSoon && (
+                    <span className="px-2 py-1 bg-amber-100 text-amber-700 text-xs font-medium rounded-full">
+                      {credit.daysRemaining}d left
+                    </span>
+                  )}
+                </div>
+                
+                <div className="mb-3">
+                  <div className="flex items-center justify-between text-sm mb-1">
+                    <span className="text-gray-500">{formatCurrency(credit.used)} used</span>
+                    <span className="font-medium text-gray-900">{formatCurrency(credit.remaining)} left</span>
+                  </div>
+                  <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                    <div 
+                      className={`h-full rounded-full transition-all ${
+                        credit.percentUsed >= 75 ? 'bg-green-500' :
+                        credit.percentUsed >= 50 ? 'bg-blue-500' :
+                        credit.percentUsed >= 25 ? 'bg-amber-500' : 'bg-gray-300'
+                      }`}
+                      style={{ width: `${credit.percentUsed}%` }}
+                    />
+                  </div>
+                </div>
+                
+                {credit.description && (
+                  <p className="text-xs text-gray-500 line-clamp-2">{credit.description}</p>
+                )}
+              </Link>
+            ))}
+          </div>
+          
+          {stats.availableCredits.length > 6 && (
+            <div className="mt-4 text-center">
+              <Link 
+                to="/wallet" 
+                className="inline-flex items-center gap-2 text-indigo-600 hover:text-indigo-700 font-medium"
+              >
+                View all {stats.availableCredits.length} available credits
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </Link>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Card Preview */}
       <div>
         <div className="flex items-center justify-between mb-4">
@@ -335,4 +452,79 @@ function ChartIcon({ className }) {
       <path strokeLinecap="round" strokeLinejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
     </svg>
   );
+}
+
+function getCategoryStyle(category) {
+  const styles = {
+    travel: { bg: 'bg-blue-100', text: 'text-blue-600' },
+    dining: { bg: 'bg-orange-100', text: 'text-orange-600' },
+    entertainment: { bg: 'bg-purple-100', text: 'text-purple-600' },
+    shopping: { bg: 'bg-pink-100', text: 'text-pink-600' },
+    transportation: { bg: 'bg-cyan-100', text: 'text-cyan-600' },
+    groceries: { bg: 'bg-green-100', text: 'text-green-600' },
+    wellness: { bg: 'bg-rose-100', text: 'text-rose-600' },
+    gas: { bg: 'bg-amber-100', text: 'text-amber-600' },
+    general: { bg: 'bg-gray-100', text: 'text-gray-600' },
+  };
+  return styles[category] || styles.general;
+}
+
+function CategoryIcon({ category, className }) {
+  switch (category) {
+    case 'travel':
+      return (
+        <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+        </svg>
+      );
+    case 'dining':
+      return (
+        <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+          <circle cx="12" cy="12" r="10" />
+        </svg>
+      );
+    case 'entertainment':
+      return (
+        <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+        </svg>
+      );
+    case 'shopping':
+      return (
+        <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+        </svg>
+      );
+    case 'transportation':
+      return (
+        <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M8 7h8m-8 4h8m-6 4h4M5 3h14a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2z" />
+        </svg>
+      );
+    case 'groceries':
+      return (
+        <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+        </svg>
+      );
+    case 'wellness':
+      return (
+        <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+        </svg>
+      );
+    case 'gas':
+      return (
+        <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+        </svg>
+      );
+    default:
+      return (
+        <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+      );
+  }
 }
