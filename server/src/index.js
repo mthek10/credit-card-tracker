@@ -43,4 +43,5 @@ app.get('*', (req, res) => {
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
   console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+  console.log(`Version: 2.0.0 - No Ethereal`);
 });
