@@ -48,11 +48,33 @@ export function initializeDatabase() {
   if (hasCards.count < 30) {
     console.log('Seeding database with expanded card library...');
     
-    // Clear existing global cards and their benefits (preserve user data)
-    db.exec(`
-      DELETE FROM card_benefits WHERE card_template_id IN (SELECT id FROM card_templates WHERE user_id IS NULL);
-      DELETE FROM card_templates WHERE user_id IS NULL;
-    `);
+    // Need to delete in correct order due to foreign key constraints:
+    // 1. benefit_usage references user_cards
+    // 2. user_cards references card_templates
+    // 3. card_benefits references card_templates
+    
+    // Get IDs of global card templates
+    const globalTemplateIds = db.prepare('SELECT id FROM card_templates WHERE user_id IS NULL').all().map(r => r.id);
+    
+    if (globalTemplateIds.length > 0) {
+      const idList = globalTemplateIds.join(',');
+      
+      // Delete benefit_usage for user_cards that use global templates
+      db.exec(`
+        DELETE FROM benefit_usage WHERE user_card_id IN (
+          SELECT id FROM user_cards WHERE card_template_id IN (${idList})
+        );
+      `);
+      
+      // Delete user_cards that reference global templates
+      db.exec(`DELETE FROM user_cards WHERE card_template_id IN (${idList});`);
+      
+      // Delete card_benefits for global templates
+      db.exec(`DELETE FROM card_benefits WHERE card_template_id IN (${idList});`);
+      
+      // Delete global card templates
+      db.exec(`DELETE FROM card_templates WHERE user_id IS NULL;`);
+    }
     
     const seed = readFileSync(join(__dirname, 'seed.sql'), 'utf-8');
     db.exec(seed);
