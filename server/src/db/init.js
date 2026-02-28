@@ -48,37 +48,33 @@ export function initializeDatabase() {
   if (hasCards.count < 30) {
     console.log('Seeding database with expanded card library...');
     
-    // Need to delete in correct order due to foreign key constraints:
-    // 1. benefit_usage references user_cards
-    // 2. user_cards references card_templates
-    // 3. card_benefits references card_templates
+    // Temporarily disable foreign keys for clean reseed
+    db.pragma('foreign_keys = OFF');
     
-    // Get IDs of global card templates
-    const globalTemplateIds = db.prepare('SELECT id FROM card_templates WHERE user_id IS NULL').all().map(r => r.id);
-    
-    if (globalTemplateIds.length > 0) {
-      const idList = globalTemplateIds.join(',');
-      
-      // Delete benefit_usage for user_cards that use global templates
+    try {
+      // Delete all data related to global templates
       db.exec(`
         DELETE FROM benefit_usage WHERE user_card_id IN (
-          SELECT id FROM user_cards WHERE card_template_id IN (${idList})
+          SELECT id FROM user_cards WHERE card_template_id IN (
+            SELECT id FROM card_templates WHERE user_id IS NULL
+          )
         );
+        DELETE FROM user_cards WHERE card_template_id IN (
+          SELECT id FROM card_templates WHERE user_id IS NULL
+        );
+        DELETE FROM card_benefits WHERE card_template_id IN (
+          SELECT id FROM card_templates WHERE user_id IS NULL
+        );
+        DELETE FROM card_templates WHERE user_id IS NULL;
       `);
       
-      // Delete user_cards that reference global templates
-      db.exec(`DELETE FROM user_cards WHERE card_template_id IN (${idList});`);
-      
-      // Delete card_benefits for global templates
-      db.exec(`DELETE FROM card_benefits WHERE card_template_id IN (${idList});`);
-      
-      // Delete global card templates
-      db.exec(`DELETE FROM card_templates WHERE user_id IS NULL;`);
+      const seed = readFileSync(join(__dirname, 'seed.sql'), 'utf-8');
+      db.exec(seed);
+      console.log('Database seeded with', db.prepare('SELECT COUNT(*) as count FROM card_templates WHERE user_id IS NULL').get().count, 'cards');
+    } finally {
+      // Re-enable foreign keys
+      db.pragma('foreign_keys = ON');
     }
-    
-    const seed = readFileSync(join(__dirname, 'seed.sql'), 'utf-8');
-    db.exec(seed);
-    console.log('Database seeded with', db.prepare('SELECT COUNT(*) as count FROM card_templates WHERE user_id IS NULL').get().count, 'cards');
   }
 
   return db;
