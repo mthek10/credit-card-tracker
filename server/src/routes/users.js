@@ -33,22 +33,41 @@ export default function usersRouter(db) {
 
       // Create user if doesn't exist
       if (!user) {
-        const result = db.prepare('INSERT INTO users (email, name) VALUES (?, ?)').run(normalizedEmail, name.trim());
-        user = { id: result.lastInsertRowid, email: normalizedEmail, name: name.trim() };
+        try {
+          const result = db.prepare('INSERT INTO users (email, name) VALUES (?, ?)').run(normalizedEmail, name.trim());
+          user = { id: result.lastInsertRowid, email: normalizedEmail, name: name.trim() };
+          console.log('Created user:', user.id);
+        } catch (dbError) {
+          console.error('Failed to create user:', dbError.message);
+          throw dbError;
+        }
       }
 
       // Generate magic link token
       const token = generateToken();
       const expiresAt = generateTokenExpiry(15); // 15 minutes
+      console.log('Generated token, expires:', expiresAt);
 
       // Invalidate any existing unused tokens for this email
-      db.prepare('UPDATE magic_links SET used = 1 WHERE email = ? AND used = 0').run(normalizedEmail);
+      try {
+        db.prepare('UPDATE magic_links SET used = 1 WHERE email = ? AND used = 0').run(normalizedEmail);
+        console.log('Invalidated old tokens');
+      } catch (dbError) {
+        console.error('Failed to invalidate old tokens:', dbError.message);
+        throw dbError;
+      }
 
       // Store new token
-      db.prepare(`
-        INSERT INTO magic_links (email, token, expires_at)
-        VALUES (?, ?, ?)
-      `).run(normalizedEmail, token, expiresAt);
+      try {
+        db.prepare(`
+          INSERT INTO magic_links (email, token, expires_at)
+          VALUES (?, ?, ?)
+        `).run(normalizedEmail, token, expiresAt);
+        console.log('Stored new token');
+      } catch (dbError) {
+        console.error('Failed to store token:', dbError.message);
+        throw dbError;
+      }
 
       // Send email
       const baseUrl = req.headers.origin || `http://localhost:${process.env.PORT || 5173}`;
