@@ -13,11 +13,13 @@ export default function AuthPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!email.trim()) return;
+    if (needsName && !name.trim()) return;
     
     setLoading(true);
     clearError();
     
-    const result = await requestMagicLink(email.trim(), needsName ? name.trim() : null);
+    const nameToSend = needsName && name.trim() ? name.trim() : null;
+    const result = await requestMagicLink(email.trim(), nameToSend);
     
     setLoading(false);
     

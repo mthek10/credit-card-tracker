@@ -9,8 +9,10 @@ export default function usersRouter(db) {
   router.post('/magic-link', async (req, res) => {
     try {
       const { email, name } = req.body;
+      console.log('Magic link request:', { email, name: name || '(not provided)' });
 
       if (!email || !email.includes('@')) {
+        console.log('Invalid email rejected');
         return res.status(400).json({ error: 'Valid email is required' });
       }
 
@@ -21,11 +23,13 @@ export default function usersRouter(db) {
       
       // If new user, name is required
       if (!user && !name) {
+        console.log('New user, name required');
         return res.status(400).json({ 
           error: 'Name is required for new accounts',
           isNewUser: true 
         });
       }
+      console.log('User lookup:', user ? `Found user ${user.id}` : 'Creating new user');
 
       // Create user if doesn't exist
       if (!user) {
