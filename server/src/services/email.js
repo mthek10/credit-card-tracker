@@ -1,54 +1,38 @@
-import nodemailer from 'nodemailer';
+import { Resend } from 'resend';
 
-let transporter = null;
+let resendClient = null;
 
-function getTransporter() {
-  if (transporter) return transporter;
-
-  // Only create transporter if we have real SMTP config
-  if (process.env.SMTP_HOST) {
-    transporter = nodemailer.createTransport({
-      host: process.env.SMTP_HOST,
-      port: process.env.SMTP_PORT || 587,
-      secure: process.env.SMTP_SECURE === 'true',
-      auth: {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASS,
-      },
-    });
-    return transporter;
+function getEmailClient() {
+  if (resendClient) return resendClient;
+  
+  if (process.env.RESEND_API_KEY) {
+    resendClient = new Resend(process.env.RESEND_API_KEY);
+    return resendClient;
   }
-
+  
   return null;
 }
 
 export async function sendMagicLinkEmail(email, token, baseUrl) {
   const magicLink = `${baseUrl}/auth/verify?token=${token}`;
-  const transport = getTransporter();
+  const client = getEmailClient();
 
-  // If no SMTP configured, just log the link (for dev/testing)
-  if (!transport) {
+  // If no email client configured, just log the link (for dev/testing)
+  if (!client) {
     console.log('========================================');
-    console.log('MAGIC LINK (no SMTP configured)');
+    console.log('MAGIC LINK (no email configured)');
     console.log(`Email: ${email}`);
     console.log(`Link: ${magicLink}`);
     console.log('========================================');
-    return { messageId: 'console-' + Date.now(), magicLink };
+    return { id: 'console-' + Date.now(), magicLink };
   }
 
-  const mailOptions = {
-    from: process.env.SMTP_FROM || '"CardTracker" <noreply@cardtracker.app>',
+  const fromEmail = process.env.EMAIL_FROM || 'CardTracker <onboarding@resend.dev>';
+  
+  const { data, error } = await client.emails.send({
+    from: fromEmail,
     to: email,
     subject: 'Your CardTracker Login Link',
-    text: `
-Click this link to log in to CardTracker:
-
-${magicLink}
-
-This link expires in 15 minutes.
-
-If you didn't request this, you can safely ignore this email.
-    `.trim(),
     html: `
 <!DOCTYPE html>
 <html>
@@ -84,8 +68,13 @@ If you didn't request this, you can safely ignore this email.
 </body>
 </html>
     `.trim(),
-  };
+  });
 
-  const info = await transport.sendMail(mailOptions);
-  return info;
+  if (error) {
+    console.error('Resend error:', error);
+    throw new Error(error.message);
+  }
+
+  console.log('Email sent via Resend:', data.id);
+  return data;
 }

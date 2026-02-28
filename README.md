@@ -58,14 +58,18 @@ npm run dev
 
 | Variable | Required | Description |
 |----------|----------|-------------|
-| `DATA_PATH` | Yes | Set to `/data` (matches volume mount) |
-| `SMTP_HOST` | No | SMTP server (e.g., smtp.gmail.com) |
-| `SMTP_PORT` | No | SMTP port (usually 587) |
-| `SMTP_USER` | No | Email username |
-| `SMTP_PASS` | No | Email password or app password |
-| `SMTP_FROM` | No | From address |
+| `DATA_PATH` | Yes | Set to volume mount path |
+| `RESEND_API_KEY` | No | Resend API key for sending emails |
+| `EMAIL_FROM` | No | From address (default: onboarding@resend.dev) |
 
-Without SMTP config, magic links are logged to console (check Railway logs).
+Without `RESEND_API_KEY`, magic links show in the UI for testing.
+
+### Setting up Email (Resend)
+
+1. Sign up at [resend.com](https://resend.com) (free: 100 emails/day)
+2. Get your API key from the dashboard
+3. Add `RESEND_API_KEY` to Railway Variables
+4. (Optional) Add a custom domain for branded emails
 
 ## Alternative: Render
 

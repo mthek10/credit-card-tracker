@@ -71,20 +71,20 @@ export default function usersRouter(db) {
 
       // Send email
       const baseUrl = req.headers.origin || `http://localhost:${process.env.PORT || 5173}`;
-      const hasSmtp = !!process.env.SMTP_HOST;
+      const hasEmailConfig = !!process.env.RESEND_API_KEY;
       
       try {
         const emailResult = await sendMagicLinkEmail(normalizedEmail, token, baseUrl);
         res.json({ 
           success: true, 
-          message: hasSmtp ? 'Magic link sent! Check your email.' : 'Magic link generated!',
-          // Include token when no SMTP configured (for testing)
-          ...(!hasSmtp && { devToken: token })
+          message: hasEmailConfig ? 'Magic link sent! Check your email.' : 'Magic link generated!',
+          // Include token when no email configured (for testing)
+          ...(!hasEmailConfig && { devToken: token })
         });
       } catch (emailError) {
         console.error('Failed to send email:', emailError);
-        // If email fails but no SMTP configured, still return token
-        if (!hasSmtp) {
+        // If email fails but no config, still return token
+        if (!hasEmailConfig) {
           res.json({ 
             success: true, 
             message: 'Magic link generated (no email configured)',
