@@ -1,14 +1,11 @@
 import nodemailer from 'nodemailer';
 
-// For development, we'll use a test account or console logging
-// In production, configure with real SMTP credentials via environment variables
-
 let transporter = null;
 
-async function getTransporter() {
+function getTransporter() {
   if (transporter) return transporter;
 
-  // Check if we have real SMTP config
+  // Only create transporter if we have real SMTP config
   if (process.env.SMTP_HOST) {
     transporter = nodemailer.createTransport({
       host: process.env.SMTP_HOST,
@@ -19,27 +16,25 @@ async function getTransporter() {
         pass: process.env.SMTP_PASS,
       },
     });
-  } else {
-    // Use Ethereal for development (fake SMTP that captures emails)
-    const testAccount = await nodemailer.createTestAccount();
-    transporter = nodemailer.createTransport({
-      host: 'smtp.ethereal.email',
-      port: 587,
-      secure: false,
-      auth: {
-        user: testAccount.user,
-        pass: testAccount.pass,
-      },
-    });
-    console.log('Using Ethereal test email account:', testAccount.user);
+    return transporter;
   }
 
-  return transporter;
+  return null;
 }
 
 export async function sendMagicLinkEmail(email, token, baseUrl) {
-  const transport = await getTransporter();
   const magicLink = `${baseUrl}/auth/verify?token=${token}`;
+  const transport = getTransporter();
+
+  // If no SMTP configured, just log the link (for dev/testing)
+  if (!transport) {
+    console.log('========================================');
+    console.log('MAGIC LINK (no SMTP configured)');
+    console.log(`Email: ${email}`);
+    console.log(`Link: ${magicLink}`);
+    console.log('========================================');
+    return { messageId: 'console-' + Date.now(), magicLink };
+  }
 
   const mailOptions = {
     from: process.env.SMTP_FROM || '"CardTracker" <noreply@cardtracker.app>',
@@ -92,11 +87,5 @@ If you didn't request this, you can safely ignore this email.
   };
 
   const info = await transport.sendMail(mailOptions);
-  
-  // In development, log the preview URL
-  if (!process.env.SMTP_HOST) {
-    console.log('Magic link email preview:', nodemailer.getTestMessageUrl(info));
-  }
-
   return info;
 }
