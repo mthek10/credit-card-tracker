@@ -37,29 +37,39 @@ npm run dev
 - Frontend: http://localhost:5173
 - Backend: http://localhost:3001
 
-## Deployment on Render
+## Deployment on Railway (Recommended)
 
 ### Quick Deploy
 
 1. Push this repo to GitHub
-2. Go to [Render Dashboard](https://dashboard.render.com)
-3. Click "New" → "Blueprint"
-4. Connect your GitHub repo
-5. Render will auto-detect `render.yaml` and deploy
+2. Go to [Railway](https://railway.app) and sign in with GitHub
+3. Click **New Project** → **Deploy from GitHub repo**
+4. Select `credit-card-tracker`
+5. Add a volume for persistent data:
+   - Go to your service → **Settings** → **Volumes**
+   - Click **Add Volume**
+   - Mount path: `/data`
+6. Add environment variable:
+   - Go to **Variables** tab
+   - Add `DATA_PATH` = `/data`
+7. Redeploy to apply changes
 
-### Environment Variables (Optional)
+### Environment Variables
 
-For real email sending, set these in Render dashboard:
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `DATA_PATH` | Yes | Set to `/data` (matches volume mount) |
+| `SMTP_HOST` | No | SMTP server (e.g., smtp.gmail.com) |
+| `SMTP_PORT` | No | SMTP port (usually 587) |
+| `SMTP_USER` | No | Email username |
+| `SMTP_PASS` | No | Email password or app password |
+| `SMTP_FROM` | No | From address |
 
-| Variable | Description |
-|----------|-------------|
-| `SMTP_HOST` | SMTP server (e.g., smtp.gmail.com) |
-| `SMTP_PORT` | SMTP port (usually 587) |
-| `SMTP_USER` | Email username |
-| `SMTP_PASS` | Email password or app password |
-| `SMTP_FROM` | From address (e.g., "CardTracker" <noreply@example.com>) |
+Without SMTP config, magic links are logged to console (check Railway logs).
 
-Without SMTP config, magic links are logged to console (dev mode).
+## Alternative: Render
+
+You can also deploy on Render using the included `render.yaml`, but the free tier doesn't include persistent storage.
 
 ## Project Structure
 

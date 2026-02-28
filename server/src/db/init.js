@@ -8,8 +8,9 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 export function initializeDatabase() {
-  // Use environment variable for data path, or default to local
-  const dataDir = process.env.DATA_PATH || join(__dirname, '../../data');
+  // Use environment variable for data path (Railway uses /data volume)
+  // Fallback to local data folder for development
+  const dataDir = process.env.DATA_PATH || process.env.RAILWAY_VOLUME_MOUNT_PATH || join(__dirname, '../../data');
   
   // Ensure data directory exists
   if (!existsSync(dataDir)) {
