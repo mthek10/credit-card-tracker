@@ -44,7 +44,8 @@ export function UserProvider({ children }) {
       return { 
         success: true, 
         message: data.message,
-        devToken: data.devToken // For development testing
+        devToken: data.devToken,
+        emailError: data.emailError // True if email failed to send
       };
     } catch (err) {
       setError(err.message);

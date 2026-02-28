@@ -9,6 +9,7 @@ export default function AuthPage() {
   const [loading, setLoading] = useState(false);
   const [emailSent, setEmailSent] = useState(false);
   const [devToken, setDevToken] = useState(null);
+  const [emailFailed, setEmailFailed] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -28,6 +29,7 @@ export default function AuthPage() {
     } else if (result.success) {
       setEmailSent(true);
       setDevToken(result.devToken);
+      setEmailFailed(result.emailError || false);
     }
   };
 
@@ -41,32 +43,40 @@ export default function AuthPage() {
             </svg>
           </div>
           
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Check your email</h1>
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">
+            {emailFailed ? 'Use this link to log in' : 'Check your email'}
+          </h1>
           <p className="text-gray-600 mb-6">
-            We sent a login link to<br />
-            <span className="font-semibold text-gray-900">{email}</span>
+            {emailFailed ? (
+              <>Click the link below to log in</>
+            ) : (
+              <>We sent a login link to<br />
+              <span className="font-semibold text-gray-900">{email}</span></>
+            )}
           </p>
           
-          <div className="bg-indigo-50 rounded-xl p-4 mb-6 text-left">
-            <div className="flex items-start gap-3">
-              <svg className="w-5 h-5 text-indigo-600 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              <div className="text-sm text-indigo-800">
-                Click the link in the email to log in. The link expires in 15 minutes.
+          {!emailFailed && (
+            <div className="bg-indigo-50 rounded-xl p-4 mb-6 text-left">
+              <div className="flex items-start gap-3">
+                <svg className="w-5 h-5 text-indigo-600 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <div className="text-sm text-indigo-800">
+                  Click the link in the email to log in. The link expires in 15 minutes.
+                </div>
               </div>
             </div>
-          </div>
+          )}
 
-          {/* Dev mode: show token for testing */}
+          {/* Show login link when email fails or in dev mode */}
           {devToken && (
-            <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6 text-left">
-              <div className="text-xs font-semibold text-amber-700 uppercase mb-2">Dev Mode</div>
+            <div className={`rounded-xl p-4 mb-6 text-left ${emailFailed ? 'bg-green-50 border border-green-200' : 'bg-amber-50 border border-amber-200'}`}>
+              {!emailFailed && <div className="text-xs font-semibold text-amber-700 uppercase mb-2">Dev Mode</div>}
               <a 
                 href={`/auth/verify?token=${devToken}`}
-                className="text-sm text-amber-800 hover:underline break-all"
+                className={`text-sm font-medium hover:underline break-all block ${emailFailed ? 'text-green-700' : 'text-amber-800'}`}
               >
-                Click here to log in (or check console for email preview)
+                {emailFailed ? '→ Click here to log in to CardTracker' : 'Click here to log in (or check console for email preview)'}
               </a>
             </div>
           )}

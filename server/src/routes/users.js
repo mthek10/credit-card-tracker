@@ -83,16 +83,14 @@ export default function usersRouter(db) {
         });
       } catch (emailError) {
         console.error('Failed to send email:', emailError);
-        // If email fails but no config, still return token
-        if (!hasEmailConfig) {
-          res.json({ 
-            success: true, 
-            message: 'Magic link generated (no email configured)',
-            devToken: token
-          });
-        } else {
-          res.status(500).json({ error: 'Failed to send email. Please try again.' });
-        }
+        // Always return the token as fallback so users can still log in
+        // This handles cases where Resend free tier can't send to unverified domains
+        res.json({ 
+          success: true, 
+          message: 'Email delivery failed. Use the link below to log in.',
+          devToken: token,
+          emailError: true
+        });
       }
     } catch (error) {
       console.error('Error requesting magic link:', error);
