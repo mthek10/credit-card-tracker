@@ -457,3 +457,73 @@ INSERT INTO card_benefits (card_template_id, name, description, type, value, max
 (41, '2x Points on Travel', '2x points on travel', 'points_multiplier', 2, NULL, 'travel'),
 (41, 'Transfer Partners', 'Transfer to major airline and hotel partners', 'perk', 100, NULL, 'rewards'),
 (41, 'No Annual Fee', 'No annual fee', 'perk', 0, NULL, 'general');
+
+-- =====================================================
+-- AMAZON CARDS
+-- =====================================================
+
+-- Amazon Prime Rewards Visa (Whole Foods)
+INSERT INTO card_templates (name, issuer, annual_fee, image_color) VALUES 
+('Amazon Prime Rewards Visa', 'Chase', 0, '#131921');
+
+INSERT INTO card_benefits (card_template_id, name, description, type, value, max_value, category) VALUES
+(42, '5% Back at Amazon', '5% back at Amazon.com and Whole Foods with Prime membership', 'points_multiplier', 5, NULL, 'shopping'),
+(42, '5% Back at Whole Foods', '5% back at Whole Foods Market with Prime membership', 'points_multiplier', 5, NULL, 'groceries'),
+(42, '2% Back at Restaurants', '2% back at restaurants, gas stations, and drugstores', 'points_multiplier', 2, NULL, 'dining'),
+(42, '1% Back on Everything', '1% back on all other purchases', 'points_multiplier', 1, NULL, 'general'),
+(42, 'No Annual Fee', 'No annual fee (requires Prime membership)', 'perk', 0, NULL, 'general'),
+(42, 'No Foreign Transaction Fees', 'No foreign transaction fees', 'perk', 50, NULL, 'travel');
+
+-- Amazon Store Card
+INSERT INTO card_templates (name, issuer, annual_fee, image_color) VALUES 
+('Amazon Store Card', 'Synchrony', 0, '#FF9900');
+
+INSERT INTO card_benefits (card_template_id, name, description, type, value, max_value, category) VALUES
+(43, '5% Back at Amazon', '5% back on Amazon.com purchases with Prime membership', 'points_multiplier', 5, NULL, 'shopping'),
+(43, 'Special Financing', 'Special financing on eligible Amazon purchases', 'perk', 50, NULL, 'shopping'),
+(43, 'No Annual Fee', 'No annual fee', 'perk', 0, NULL, 'general');
+
+-- =====================================================
+-- APPLE CARD
+-- =====================================================
+
+-- Apple Card
+INSERT INTO card_templates (name, issuer, annual_fee, image_color) VALUES 
+('Apple Card', 'Goldman Sachs', 0, '#F5F5F7');
+
+INSERT INTO card_benefits (card_template_id, name, description, type, value, max_value, category) VALUES
+(44, '3% Daily Cash at Apple', '3% Daily Cash on Apple purchases', 'points_multiplier', 3, NULL, 'shopping'),
+(44, '3% Daily Cash Select Partners', '3% Daily Cash at select merchants (Uber, Walgreens, Nike, etc.)', 'points_multiplier', 3, NULL, 'shopping'),
+(44, '2% Daily Cash with Apple Pay', '2% Daily Cash when using Apple Pay', 'points_multiplier', 2, NULL, 'general'),
+(44, '1% Daily Cash', '1% Daily Cash on all other purchases', 'points_multiplier', 1, NULL, 'general'),
+(44, 'No Annual Fee', 'No annual fee', 'perk', 0, NULL, 'general'),
+(44, 'No Foreign Transaction Fees', 'No foreign transaction fees', 'perk', 50, NULL, 'travel');
+
+-- =====================================================
+-- COSTCO CARD
+-- =====================================================
+
+-- Costco Anywhere Visa
+INSERT INTO card_templates (name, issuer, annual_fee, image_color) VALUES 
+('Costco Anywhere Visa', 'Citi', 0, '#E31837');
+
+INSERT INTO card_benefits (card_template_id, name, description, type, value, max_value, category) VALUES
+(45, '4% on Gas', '4% cash back on eligible gas (up to $7,000/year)', 'points_multiplier', 4, NULL, 'gas'),
+(45, '3% on Restaurants & Travel', '3% cash back on restaurants and eligible travel', 'points_multiplier', 3, NULL, 'dining'),
+(45, '2% at Costco', '2% cash back on Costco and Costco.com purchases', 'points_multiplier', 2, NULL, 'shopping'),
+(45, '1% on Everything', '1% cash back on all other purchases', 'points_multiplier', 1, NULL, 'general'),
+(45, 'No Annual Fee', 'No annual fee (requires Costco membership)', 'perk', 0, NULL, 'general');
+
+-- =====================================================
+-- TARGET CARD
+-- =====================================================
+
+-- Target RedCard (Credit)
+INSERT INTO card_templates (name, issuer, annual_fee, image_color) VALUES 
+('Target RedCard', 'TD Bank', 0, '#CC0000');
+
+INSERT INTO card_benefits (card_template_id, name, description, type, value, max_value, category) VALUES
+(46, '5% Off at Target', '5% off Target purchases in-store and online', 'points_multiplier', 5, NULL, 'shopping'),
+(46, 'Free Shipping', 'Free shipping on Target.com orders', 'perk', 50, NULL, 'shopping'),
+(46, 'Extended Returns', '30 extra days for returns', 'perk', 25, NULL, 'shopping'),
+(46, 'No Annual Fee', 'No annual fee', 'perk', 0, NULL, 'general');
