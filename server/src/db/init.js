@@ -43,12 +43,20 @@ export function initializeDatabase() {
   const schema = readFileSync(join(__dirname, 'schema.sql'), 'utf-8');
   db.exec(schema);
 
+  // Check card count - if less than 30, reseed with expanded library
   const hasCards = db.prepare('SELECT COUNT(*) as count FROM card_templates WHERE user_id IS NULL').get();
-  if (hasCards.count === 0) {
-    console.log('Seeding database with initial card data...');
+  if (hasCards.count < 30) {
+    console.log('Seeding database with expanded card library...');
+    
+    // Clear existing global cards and their benefits (preserve user data)
+    db.exec(`
+      DELETE FROM card_benefits WHERE card_template_id IN (SELECT id FROM card_templates WHERE user_id IS NULL);
+      DELETE FROM card_templates WHERE user_id IS NULL;
+    `);
+    
     const seed = readFileSync(join(__dirname, 'seed.sql'), 'utf-8');
     db.exec(seed);
-    console.log('Database seeded successfully');
+    console.log('Database seeded with', db.prepare('SELECT COUNT(*) as count FROM card_templates WHERE user_id IS NULL').get().count, 'cards');
   }
 
   return db;
